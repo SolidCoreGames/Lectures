@@ -25,7 +25,6 @@ ABaseGameModeBase::ABaseGameModeBase()
 	
 }
 
-
 void ABaseGameModeBase::BeginPlay() 
 {
 	Super::BeginPlay();
