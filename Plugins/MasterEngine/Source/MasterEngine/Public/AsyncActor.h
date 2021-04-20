@@ -20,7 +20,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSoftObjectPtr<UStaticMesh> MeshAssetPath;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	UStaticMeshComponent* MeshComponent;
 	
 protected:
