@@ -28,6 +28,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	EZombieState _currentState = EZombieState::ZS_Idle;
 
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	FName _headSocketName;
+	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UAIPerceptionComponent * _perseptions;
 
@@ -43,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeState(EZombieState NewState);
+
+	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
 protected:
 	// Called when the game starts or when spawned

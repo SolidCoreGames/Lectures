@@ -63,6 +63,13 @@ void AZommiePawn::ChangeState(EZombieState NewState)
 	}
 }
 
+void AZommiePawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
+{
+	FTransform headTransform = GetMesh()->GetSocketTransform(_headSocketName);
+	OutLocation = headTransform.GetLocation();
+	OutRotation = headTransform.GetRotation().Rotator();
+}
+
 // Called when the game starts or when spawned
 void AZommiePawn::BeginPlay()
 {
