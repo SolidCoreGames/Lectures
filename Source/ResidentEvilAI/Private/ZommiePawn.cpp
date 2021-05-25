@@ -29,6 +29,16 @@ AZommiePawn::AZommiePawn()
 	_sightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	_sightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
+	// Create a gun mesh component
+	_gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
+	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
+	_gun->SetupAttachment(GetMesh(), TEXT("Weapon_Socket"));
+
+	_muzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
+	_muzzleLocation->SetupAttachment(_gun);
+	_muzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
+
+
 }
 
 EZombieState AZommiePawn::GetCurrentState()
@@ -74,8 +84,28 @@ void AZommiePawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotat
 void AZommiePawn::BeginPlay()
 {
 	Super::BeginPlay();
-	_perseptions->OnPerceptionUpdated.AddDynamic(this, &AZommiePawn::PreseptionsUpdated);
+	//_perseptions->OnPerceptionUpdated.AddDynamic(this, &AZommiePawn::PreseptionsUpdated);
+	_perseptions->OnTargetPerceptionUpdated.AddDynamic(this, &AZommiePawn::TargetPerceptionUpdated);
+}
 
+void AZommiePawn::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	AResidentEvilAICharacter * plyaerCharacter = Cast<AResidentEvilAICharacter>(Actor);
+	AAIController * controller = Cast<AAIController>(GetController());
+	UBlackboardComponent * blackbord = controller->GetBlackboardComponent();
+	if(plyaerCharacter)
+	{
+		if(Stimulus.IsActive())
+		{
+			UE_LOG(LogTemp, Warning, TEXT(" %s seen %s"), *GetName(), *Actor->GetName());
+			blackbord->SetValueAsObject("TargetActor", plyaerCharacter);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT(" %s loose %s"), *GetName(), *Actor->GetName());
+			blackbord->SetValueAsObject("TargetActor", nullptr);
+		}
+	}
 }
 
 void AZommiePawn::PreseptionsUpdated(const TArray<AActor*>& Actors)
@@ -104,10 +134,38 @@ void AZommiePawn::PreseptionsUpdated(const TArray<AActor*>& Actors)
 void AZommiePawn::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	
-	
+}
 
+void AZommiePawn::SetReadyToFire()
+{
+	_isRedyToFire = true;
+}
 
+void AZommiePawn::Fire()
+{
+	if(!_isRedyToFire)
+		return;
+
+	_isRedyToFire = false;
+	GetWorld()->GetTimerManager().ClearTimer(_fireTimerHandle);
+	GetWorld()->GetTimerManager().SetTimer(_fireTimerHandle, this, &AZommiePawn::SetReadyToFire, _fireRate, false);
+	UE_LOG(LogTemp, Warning, TEXT("Fire maked"));
+
+	const FRotator SpawnRotation = GetControlRotation();
+	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	const FVector SpawnLocation = ((_muzzleLocation != nullptr) ? _muzzleLocation->GetComponentLocation() : GetActorLocation());
+
+	//Set Spawn Collision Handling Override
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	// spawn the projectile at the muzzle
+	GetWorld()->SpawnActor<AResidentEvilAIProjectile>(_projectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+
+}
+
+void AZommiePawn::OnFreMaked_Implementation()
+{
 }
 
 // Called every frame

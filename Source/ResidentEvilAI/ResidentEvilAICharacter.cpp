@@ -298,3 +298,11 @@ bool AResidentEvilAICharacter::EnableTouchscreenMovement(class UInputComponent* 
 	
 	return false;
 }
+
+bool AResidentEvilAICharacter::CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation,
+	int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor) const
+{
+	OutSightStrength = 0.25;
+
+	return true; 
+}
